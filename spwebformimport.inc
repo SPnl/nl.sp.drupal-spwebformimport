@@ -59,6 +59,8 @@ function spwebformimport_batch($selected_import_components, $webform, $file, $de
 
   $realpath = drupal_realpath($file->uri);
   $file_object = new SplFileObject($realpath);
+  $file_object->setFlags(SplFileObject::READ_CSV);
+  $file_object->setCsvControl($delimiter);
 
   if (empty($context['sandbox'])) {
     // Get number of rows to import.
@@ -78,7 +80,8 @@ function spwebformimport_batch($selected_import_components, $webform, $file, $de
   $rows = array();
   $file_object->seek($context['sandbox']['progress']);
   for ($i = 0; $i < $chunk_size; $i++) {
-    $row = $file_object->fgetcsv($delimiter);
+    $file_object->seek($context['sandbox']['progress']);
+    $row = $file_object->current();
     if ($file_object->eof()) {
       $context['finished'] = 1;
       return;
@@ -89,7 +92,7 @@ function spwebformimport_batch($selected_import_components, $webform, $file, $de
       $context['results']['count'] ++;
     }
     // Update our progress information.
-    $context['sandbox']['progress'] = $file_object->key();
+    $context['sandbox']['progress']++;
   }
 
   $context['sandbox']['current_chunk'] ++;
@@ -112,7 +115,7 @@ function spwebformimport_batch_process_row($row, $selected_import_components, $w
     if ($value == '') {
       if ($selected_component['required']) {
         drupal_set_message('Verplichte veldwaarde (nr. ' . $csv_field_nr . ') ontbreekt, rij (nr. ' . $count . ') wordt overgeslagen.', 'warning');
-        return;
+        return FALSE;
       }
       else {
         continue;
@@ -127,7 +130,7 @@ function spwebformimport_batch_process_row($row, $selected_import_components, $w
       }
       else {
         drupal_set_message('Ongeldige tijd/datum veldwaarde (nr. ' . $csv_field_nr . '), rij (nr. ' . $count . ') wordt overgeslagen.', 'warning');
-        return;
+        return FALSE;
       }
       break;
     case 'select':
