@@ -176,7 +176,6 @@ function spwebformimport_batch_process_row($row, $selected_import_components, $w
     'is_draft' => 0,
     'data' => webform_submission_data($webform, $webform_data),
   );
-  dpm($submission);
   $sids[] = webform_submission_insert($webform, $submission);
   return TRUE;
 }
