@@ -1,0 +1,51 @@
+<?php
+
+/**
+ * @file
+ * Allows delimited data files to be imported as results into webforms.
+ *
+ * This is usefull for importing results from other systems in to Webform.
+ *
+ * @author John C Jemmett <jjemmett@northwind-inc.com>
+ * @author Greg Bosen <gbosen@northwind-inc.com>
+ * @author Joe Corall <joe.corall@gmail.com>
+ *
+ */
+
+module_load_include("inc", "spwebformimport", "spwebformimport");
+
+/*
+ * Implements hook_menu.
+ */
+function spwebformimport_menu() {
+  $items = array();                                                                                   
+
+  $items['admin/config/sp/spwebformimport'] = array(
+    'title' => 'SP webformulier csv import',
+    'type' => MENU_NORMAL_ITEM,
+    'page callback' => 'spwebformimport_overview',
+    'access callback' => 'sprbs_access_check',
+  );
+
+  $items['admin/config/sp/spwebformimport/overview'] = array(
+    'title' => 'Overzicht imports',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'access callback' => 'sprbs_access_check',
+    'weight' => '0',
+  );
+
+  $items['admin/config/sp/spwebformimport/import'] = array(
+    'title' => 'CSV importeren',
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('spwebformimport_import_form'),
+    'file' => 'spwebformimport.import.form.inc',
+    'access callback' => 'sprbs_access_check',
+    'weight' => '1',
+  );
+  return $items;
+}
+
+function spwebformimport_overview() {
+  return '<p>TEST</p>';
+}

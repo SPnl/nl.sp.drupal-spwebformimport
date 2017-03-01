@@ -1,0 +1,6 @@
+name = SP Webform Import
+description = Enables the upload of webform values from a delimited file.
+core = 7.x
+package = sprbs
+dependencies[] = webform
+dependencies[] = spwebformsync
