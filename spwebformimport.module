@@ -21,28 +21,21 @@ function spwebformimport_menu() {
   $items = array();                                                                                   
 
   $items['admin/config/sp/spwebformimport'] = array(
-    'title' => 'SP webformulier csv import',
+    'title' => 'CSV importeren',
     'type' => MENU_NORMAL_ITEM,
-    'page callback' => 'spwebformimport_overview',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('spwebformimport_import_form'),
+    'file' => 'spwebformimport.import.form.inc',
     'access callback' => 'sprbs_access_check',
   );
 
-  $items['admin/config/sp/spwebformimport/overview'] = array(
-    'title' => 'Overzicht imports',
+  $items['admin/config/sp/spwebformimport/import'] = array(
+    'title' => 'CSV importeren',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'access callback' => 'sprbs_access_check',
     'weight' => '0',
   );
 
-  $items['admin/config/sp/spwebformimport/import'] = array(
-    'title' => 'CSV importeren',
-    'type' => MENU_LOCAL_TASK,
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('spwebformimport_import_form'),
-    'file' => 'spwebformimport.import.form.inc',
-    'access callback' => 'sprbs_access_check',
-    'weight' => '1',
-  );
   return $items;
 }
 

@@ -53,7 +53,7 @@ function spwebformimport_get_import_components($node) {
   return $import_components;
 }
 
-function spwebformimport_batch($selected_import_components, $webform, $file, $delimiter, &$context) {
+function spwebformimport_batch($selected_import_components, $webform, $file, $delimiter, $skip_first_row, &$context) {
   // Process by chunks.
   $chunk_size = 50;
 
@@ -69,7 +69,7 @@ function spwebformimport_batch($selected_import_components, $webform, $file, $de
     $file_object->rewind();
 
     $context['sandbox'] = array();
-    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['progress'] = $skip_first_row;
     $context['sandbox']['current_row'] = 0;
     $context['sandbox']['max'] = $rowcount;
     $context['sandbox']['current_chunk'] = 0;

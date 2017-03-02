@@ -126,6 +126,12 @@ function spwebformimport_import_form($form, &$form_state) {
             );
           }
 
+          $form['skip_first_row'] = array(
+            '#type' => 'checkboxes',
+            '#options' => array('skip_first_row' => '<strong>Sla de eerste rij over</strong>'),
+            '#multiple' => TRUE,
+          );
+
           $form['submit_mapping'] = array(
             '#type' => 'submit',
             '#name' => 'submit_mapping',
@@ -259,10 +265,13 @@ function spwebformimport_import_form_submit($form, &$form_state) {
           } 
         }
       }
+      // Store skip first row setting.
+      $storage['skip_first_row'] = (reset($values['skip_first_row']) === 'skip_first_row') ? 1 : 0;
+
       // Import csv.
       $batch = array(                                                                             
         'operations' => array(
-          array('spwebformimport_batch', array($storage['selected_import_components'], $storage['webform_node'], $storage['upload'], $storage['delimiter'])),                                                              
+          array('spwebformimport_batch', array($storage['selected_import_components'], $storage['webform_node'], $storage['upload'], $storage['delimiter'], $storage['skip_first_row'])),                                                              
         ),
         'finished' => 'spwebformimport_batch_finished',                                      
         'title' => 'Importeren csv',                                                           
