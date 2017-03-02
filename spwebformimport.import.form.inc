@@ -53,8 +53,7 @@ function spwebformimport_import_form($form, &$form_state) {
       if (empty($storage['upload'])) {
         $form['upload'] = array(
           '#type' => 'file',
-          '#title' => t('Delimited data file'),
-          '#description' => t('Choose the data file containing the data you want uploaded.'),
+          '#title' => 'CSV bestand',
           '#disabled' => (empty($storage['upload'])) ? FALSE : TRUE,
         );
 
