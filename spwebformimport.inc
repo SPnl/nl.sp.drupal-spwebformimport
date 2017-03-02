@@ -53,7 +53,7 @@ function spwebformimport_get_import_components($node) {
   return $import_components;
 }
 
-function spwebformimport_batch($selected_import_components, $webform, $file, $delimiter, $skip_first_row, &$context) {
+function spwebformimport_batch($selected_import_components, $webform, $file, $delimiter, $form_settings, &$context) {
   // Process by chunks.
   $chunk_size = 50;
 
@@ -69,7 +69,7 @@ function spwebformimport_batch($selected_import_components, $webform, $file, $de
     $file_object->rewind();
 
     $context['sandbox'] = array();
-    $context['sandbox']['progress'] = $skip_first_row;
+    $context['sandbox']['progress'] = $form_settings['skip_first_row'];
     $context['sandbox']['current_row'] = 0;
     $context['sandbox']['max'] = $rowcount;
     $context['sandbox']['current_chunk'] = 0;
@@ -87,7 +87,7 @@ function spwebformimport_batch($selected_import_components, $webform, $file, $de
       return;
       break;
     }
-    $result = spwebformimport_batch_process_row($row, $selected_import_components, $webform);
+    $result = spwebformimport_batch_process_row($context['sandbox']['progress'], $row, $selected_import_components, $webform, $form_settings['existing_submissions_action']);
     if ($result) {
       $context['results']['count'] ++;
     }
@@ -100,7 +100,7 @@ function spwebformimport_batch($selected_import_components, $webform, $file, $de
   $context['finished'] = ($context['sandbox']['progress'] / $context['sandbox']['max']);
 }
 
-function spwebformimport_batch_process_row($row, $selected_import_components, $webform) {
+function spwebformimport_batch_process_row($row_number, $row, $selected_import_components, $webform, $existing_submissions_action) {
   global $user;
   $components = $webform->webform['components'];
 
@@ -114,7 +114,7 @@ function spwebformimport_batch_process_row($row, $selected_import_components, $w
     // Check if component is required, and has value, else, skip row.
     if ($value == '') {
       if ($selected_component['required']) {
-        drupal_set_message('Verplichte veldwaarde (nr. ' . $csv_field_nr . ') ontbreekt, rij (nr. ' . $count . ') wordt overgeslagen.', 'warning');
+        drupal_set_message('Verplichte veldwaarde (nr. ' . $csv_field_nr . ') ontbreekt, rij (nr. ' . $row_number . ') wordt overgeslagen.', 'warning');
         return FALSE;
       }
       else {
@@ -129,7 +129,7 @@ function spwebformimport_batch_process_row($row, $selected_import_components, $w
         $value = $selected_component['component_type'] = 'time' ? date('H:i:s', $time) : date('Y-m-d', $time);
       }
       else {
-        drupal_set_message('Ongeldige tijd/datum veldwaarde (nr. ' . $csv_field_nr . '), rij (nr. ' . $count . ') wordt overgeslagen.', 'warning');
+        drupal_set_message('Ongeldige tijd/datum veldwaarde (nr. ' . $csv_field_nr . '), rij (nr. ' . $row_number . ') wordt overgeslagen.', 'warning');
         return FALSE;
       }
       break;
@@ -171,6 +171,7 @@ function spwebformimport_batch_process_row($row, $selected_import_components, $w
     }
     $webform_data[$selected_component['cid']] = $value;
   }
+
   $submission = (object) array(
     'nid' => $webform->nid,
     'uid' => $user->uid,
@@ -179,7 +180,48 @@ function spwebformimport_batch_process_row($row, $selected_import_components, $w
     'is_draft' => 0,
     'data' => webform_submission_data($webform, $webform_data),
   );
-  $sids[] = webform_submission_insert($webform, $submission);
+
+  // Check if row was imported before.
+  $add_new_submission = FALSE;
+  $hash = md5(print_r($row, TRUE));
+  $query = "SELECT rh.sid FROM {spwebformimport_rowhash} rh INNER JOIN {webform_submissions} ws ON rh.sid = ws.sid WHERE hash = :hash AND rh.nid = :nid";
+  $result = db_query($query, array(':hash' => $hash, ':nid' => $webform->nid));
+  $existing_sid = $result->fetchField();
+  if (!empty($existing_sid)) {
+    // Row was imported before.
+    switch ($existing_submissions_action) {
+    case 'skip':
+      drupal_set_message('Rij nr. ' . $row_number . ' was is eerder geïmporteerd (sid: ' . $existing_sid . ') en is overgeslagen.', 'warning');
+      return;
+      break;
+    case 'overwrite':
+      drupal_set_message('Rij nr. ' . $row_number . ' was reeds eerder geïmporteerd, de bestaande inzending met id: ' . $existing_sid . ' is bijgewerkt.', 'warning');
+      $submission->sid = $existing_sid;
+      $sid = webform_submission_update($webform, $submission);
+      break;
+    case 'add':
+      $sid = webform_submission_insert($webform, $submission);
+      break;
+    }
+  }
+  else {
+    $sid = webform_submission_insert($webform, $submission);
+    // Store row hash.
+    if (!empty($sid)) {
+      db_insert('spwebformimport_rowhash')
+        ->fields(array(
+          'nid' => $webform->nid,
+          'sid' => $sid,
+          'hash' => md5(print_r($row, TRUE)),
+        ))
+        ->execute();
+    }
+  }
+
+  if (empty($sid)) {
+    drupal_set_message('Het was niet mogelijk om rij nr. ' . $row_number . ' op te slaan.', 'error');
+  }
+
   return TRUE;
 }
 

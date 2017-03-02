@@ -127,9 +127,23 @@ function spwebformimport_import_form($form, &$form_state) {
           }
 
           $form['skip_first_row'] = array(
+            '#title' => 'Eerste rij?',
             '#type' => 'checkboxes',
-            '#options' => array('skip_first_row' => '<strong>Sla de eerste rij over</strong>'),
+            '#options' => array('skip_first_row' => 'overslaan'),
             '#multiple' => TRUE,
+          );
+
+          $form['existing_submissions_action'] = array(
+            '#title' => 'Wat te doen met rijen die eerder zijn geïmporteerd?',
+            '#type' => 'radios',
+            '#options' => array(
+              'overwrite' => 'Bestaande inzending bijwerken',
+              'add' => 'Nieuwe inzending toevoegen',
+              'skip' => 'Rij overslaan',
+            ),
+            '#multiple' => FALSE,
+            '#requred' => TRUE,
+            '#default_value' => 'overwrite',
           );
 
           $form['submit_mapping'] = array(
@@ -266,12 +280,15 @@ function spwebformimport_import_form_submit($form, &$form_state) {
         }
       }
       // Store skip first row setting.
-      $storage['skip_first_row'] = (reset($values['skip_first_row']) === 'skip_first_row') ? 1 : 0;
+      $form_settings = array(
+        'skip_first_row' => (reset($values['skip_first_row']) === 'skip_first_row') ? 1 : 0,
+        'existing_submissions_action' => $values['existing_submissions_action'],
+      );
 
       // Import csv.
       $batch = array(                                                                             
         'operations' => array(
-          array('spwebformimport_batch', array($storage['selected_import_components'], $storage['webform_node'], $storage['upload'], $storage['delimiter'], $storage['skip_first_row'])),                                                              
+          array('spwebformimport_batch', array($storage['selected_import_components'], $storage['webform_node'], $storage['upload'], $storage['delimiter'], $form_settings)),                                                              
         ),
         'finished' => 'spwebformimport_batch_finished',                                      
         'title' => 'Importeren csv',                                                           

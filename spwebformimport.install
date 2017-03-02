@@ -1,0 +1,87 @@
+<?php
+
+/**
+ * Implements hook_install()
+ */
+function spwebformimport_install() {
+}
+
+/**
+ * Implements hook_uninstall()
+ */
+function spwebformimport_uninstall() {
+  // Remove any variables we created.
+  //variable_del('');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function spwebformimport_schema() {
+  $schema['spwebformimport_rowhash'] = array(
+    'description' => 'SP webform importer row hashes.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Webform node id.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'Webform submission id.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'hash' => array(
+        'description' => 'CSV row hash.',
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+    ),
+    'unique keys' => array(
+      'noderowhash' => array(
+        'nid',
+        'hash',
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Add hash table.
+ */
+function spwebformimport_update_7001() {
+
+  $table = array(
+    'description' => 'SP webform importer row hashes.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Webform node id.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'sid' => array(
+        'description' => 'Webform submission id.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'hash' => array(
+        'description' => 'CSV row hash.',
+        'type' => 'varchar',
+        'length' => '255',
+      ),
+    ),
+    'unique keys' => array(
+      'noderowhash' => array(
+        'nid',
+        'hash',
+      ),
+    ),
+  );
+  db_create_table('spwebformimport_rowhash', $table);
+}

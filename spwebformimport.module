@@ -42,3 +42,11 @@ function spwebformimport_menu() {
 function spwebformimport_overview() {
   return '<p>TEST</p>';
 }
+
+  
+function spwebformimport_webform_submission_delete($node, $submission) {
+  db_delete('spwebformimport_rowhash')
+    ->condition('nid', $node->nid)
+    ->condition('sid', $submission->sid)
+    ->execute();
+}
