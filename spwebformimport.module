@@ -1,17 +1,5 @@
 <?php
 
-/**
- * @file
- * Allows delimited data files to be imported as results into webforms.
- *
- * This is usefull for importing results from other systems in to Webform.
- *
- * @author John C Jemmett <jjemmett@northwind-inc.com>
- * @author Greg Bosen <gbosen@northwind-inc.com>
- * @author Joe Corall <joe.corall@gmail.com>
- *
- */
-
 module_load_include("inc", "spwebformimport", "spwebformimport");
 
 /*
@@ -39,11 +27,6 @@ function spwebformimport_menu() {
   return $items;
 }
 
-function spwebformimport_overview() {
-  return '<p>TEST</p>';
-}
-
-  
 function spwebformimport_webform_submission_delete($node, $submission) {
   db_delete('spwebformimport_rowhash')
     ->condition('nid', $node->nid)

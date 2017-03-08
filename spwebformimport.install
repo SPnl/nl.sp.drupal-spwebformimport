@@ -47,6 +47,34 @@ function spwebformimport_schema() {
     ),
   );
 
+  $schema['spwebformimport_form_storage'] = array(
+    'description' => 'SP webform form settings storage.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Webform node id.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'columns' => array(
+        'description' => 'Number of columns.',
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+      ),
+      'form_storage' => array(
+        'description' => 'Form storage.',
+        'type' => 'text',
+        'size' => 'normal',
+      ),
+    ),
+    'unique keys' => array(
+      'nid' => array(
+        'nid',
+      ),
+    ),
+  );
+
   return $schema;
 }
 
@@ -84,4 +112,39 @@ function spwebformimport_update_7001() {
     ),
   );
   db_create_table('spwebformimport_rowhash', $table);
+}
+
+/**
+ * Add form storage table.
+ */
+function spwebformimport_update_7002() {
+
+  $table = array(
+    'description' => 'SP webform form settings storage.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'Webform node id.',
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => TRUE,
+      ),
+      'columns' => array(
+        'description' => 'Number of columns.',
+        'type' => 'int',
+        'size' => 'small',
+        'not null' => TRUE,
+      ),
+      'form_storage' => array(
+        'description' => 'Form storage.',
+        'type' => 'text',
+        'size' => 'normal',
+      ),
+    ),
+    'unique keys' => array(
+      'nid' => array(
+        'nid',
+      ),
+    ),
+  );
+  db_create_table('spwebformimport_form_storage', $table);
 }

@@ -8,9 +8,6 @@ function spwebformimport_import_form($form, &$form_state) {
   else {
     $storage = array();
   }
-  //dpm($values);
-  //dpm($storage);
-
   $form = array();
   $form['#attached']['css'] = array(
     drupal_get_path('module', 'spwebformimport') . '/webformimport.css',
@@ -48,6 +45,7 @@ function spwebformimport_import_form($form, &$form_state) {
 
     if (!empty($storage['webform'])) {
 
+
       // Upload file.
       // ----------------------------------------------------------
       if (empty($storage['upload'])) {
@@ -68,6 +66,22 @@ function spwebformimport_import_form($form, &$form_state) {
         );
       }
       else {
+        if (empty($storage['selected_import_components'])) {
+          // Get default form settings from database if available.
+          $query = "SELECT columns, form_storage FROM {spwebformimport_form_storage} WHERE nid = :nid";
+          $result = db_query($query, array(':nid' => $storage['webform']));
+          if ($result) {
+            $record = $result->fetchAssoc();
+            // Check if number of columns is file matches stored number of columns.
+            if (!empty($record['columns']) && count($storage['csv_field_mapping_data'][0]) == $record['columns']) {
+              $form_storage = unserialize($record['form_storage']);
+              $storage['selected_import_components'] = $form_storage['selected_import_components'];
+              $storage['skip_first_row'] = $form_storage['skip_first_row'];
+              $storage['existing_submissions_action'] = $form_storage['existing_submissions_action'];
+            }
+          }
+        }
+
         if ($storage['delimiter'] !== FALSE) {
           $delimiter = ($storage['delimiter'] === "\t") ? 'tab' : $storage['delimiter'];
           if (!empty($delimiter)) {
@@ -87,10 +101,12 @@ function spwebformimport_import_form($form, &$form_state) {
           '#markup' => '<table><tr><th>csv veld waarden</th><th>webformulier component</th><th>selectiewaarde mapping</th>',
         );
         foreach ($storage['csv_field_mapping_data'] as $csv_field_key => $example_values) {
+          $default = empty($storage['selected_import_components'][$csv_field_key]['component_id']) ? '' : $storage['selected_import_components'][$csv_field_key]['component_id'];
           $form['mapping']['csv_field_key_' . $csv_field_key . '_component'] = array(
             '#type' => 'select',
             '#options' => $storage['components_list'],
             '#empty_option' => '- Geen -',
+            '#default_value' => $default,
             '#name' => 'csv_field_key_' . $csv_field_key . '_component',
             '#prefix' => '<tr><td><p>' . implode('<br/>', $example_values) . '</p></td><td>',
             '#suffix' => '</td>',
@@ -110,9 +126,11 @@ function spwebformimport_import_form($form, &$form_state) {
             $component_id = $storage['selected_import_components'][$csv_field_key]['component_id'];
             $component_options = spwebformimport_parse_select_options($storage['webform_node'], $component_id, 'items'); 
             foreach ($component_options as $component_option_key => $component_option_title) {
+              $default = empty($storage['selected_import_components'][$csv_field_key]['select_mapping'][$component_option_key]) ? '' : $storage['selected_import_components'][$csv_field_key]['select_mapping'][$component_option_key];
               $form['mapping']['select_component_mapping_' .$csv_field_key . '_' . $component_option_key] = array(
                 '#type' => 'textfield',
                 '#title' => $component_option_title . ': csv veld bevat',
+                '#default_value' => $default,
               );
             }
             $form['mapping']['select_component_mapping_end_' . $csv_field_key] = array(
@@ -125,13 +143,16 @@ function spwebformimport_import_form($form, &$form_state) {
             );
           }
 
+          $default = empty($storage['skip_first_row']) ? '' : $storage['skip_first_row'];
           $form['skip_first_row'] = array(
             '#title' => 'Eerste rij?',
             '#type' => 'checkboxes',
             '#options' => array('skip_first_row' => 'overslaan'),
             '#multiple' => TRUE,
+            '#default_value' => $default,
           );
 
+          $default = empty($storage['existing_submissions_action']) ? 'overwrite' : $storage['existing_submissions_action'];
           $form['existing_submissions_action'] = array(
             '#title' => 'Wat te doen met rijen die eerder zijn geïmporteerd?',
             '#type' => 'radios',
@@ -142,7 +163,7 @@ function spwebformimport_import_form($form, &$form_state) {
             ),
             '#multiple' => FALSE,
             '#requred' => TRUE,
-            '#default_value' => 'overwrite',
+            '#default_value' => $default,
           );
 
           $form['submit_mapping'] = array(
@@ -278,6 +299,19 @@ function spwebformimport_import_form_submit($form, &$form_state) {
           } 
         }
       }
+      // Store form settings.
+      db_merge('spwebformimport_form_storage')
+        ->key(array('nid' => $storage['webform']))
+        ->fields(array(
+          'columns' => count($storage['csv_field_mapping_data'][0]),
+          'form_storage' => serialize(array(
+            'selected_import_components' => $storage['selected_import_components'],
+            'skip_first_row' => $values['skip_first_row'],
+            'existing_submissions_action' => $values['existing_submissions_action'],
+          ))
+        ))
+        ->execute();
+
       // Store skip first row setting.
       $form_settings = array(
         'skip_first_row' => (reset($values['skip_first_row']) === 'skip_first_row') ? 1 : 0,
