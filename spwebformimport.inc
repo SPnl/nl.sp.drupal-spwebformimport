@@ -122,54 +122,65 @@ function spwebformimport_batch_process_row($row_number, $row, $selected_import_c
       }
     }
 
+    // Process raw value.
     switch ($selected_component['type']) {
-    case 'time':
-    case 'date':
-      if ($time = strtotime($value)) {
-        $value = $selected_component['component_type'] = 'time' ? date('H:i:s', $time) : date('Y-m-d', $time);
-      }
-      else {
-        drupal_set_message('Ongeldige tijd/datum veldwaarde (nr. ' . $csv_field_nr . '), rij (nr. ' . $row_number . ') wordt overgeslagen.', 'warning');
-        return FALSE;
-      }
-      break;
-    case 'select':
-      if ($selected_component['extra']['multiple']) {
-        $multiselect_values = array();
-        foreach ($selected_component_info['select_mapping'] as $webform_key => $csv_value) {
-          if (strpos($value, $csv_value) !== FALSE) {
-            $multiselect_values[] = $webform_key;
+      case 'time':
+
+      case 'date':
+        if ($time = strtotime($value)) {
+          $value = $selected_component['component_type'] = 'time' ? date('H:i:s', $time) : date('Y-m-d', $time);
+        }
+        else {
+          drupal_set_message('Ongeldige tijd/datum veldwaarde (nr. ' . $csv_field_nr . '), rij (nr. ' . $row_number . ') wordt overgeslagen.', 'warning');
+          return FALSE;
+        }
+        break;
+
+      case 'select':
+        if ($selected_component['extra']['multiple']) {
+          $multiselect_values = array();
+          foreach ($selected_component_info['select_mapping'] as $webform_key => $csv_value) {
+            if (strpos($value, $csv_value) !== FALSE) {
+              $multiselect_values[] = $webform_key;
+            }
           }
-        }
-        if (empty($multiselect_values)) {
-          continue 2;
-        }
-        $value = $multiselect_values;
-      }
-      else {
-        $select_value = '';
-        foreach ($selected_component_info['select_mapping'] as $webform_key => $csv_value) {
-          if (strpos($value, $csv_value) !== FALSE) {
-            $select_value = $webform_key;
-            break;
+          if (empty($multiselect_values)) {
+            continue 2;
           }
+          $value = $multiselect_values;
         }
-        if (empty($select_value)) {
-          continue 2;
+        else {
+          $select_value = '';
+          foreach ($selected_component_info['select_mapping'] as $webform_key => $csv_value) {
+            if (strpos($value, $csv_value) !== FALSE) {
+              $select_value = $webform_key;
+              break;
+            }
+          }
+          if (empty($select_value)) {
+            continue 2;
+          }
+          $value = $select_value;
         }
-        $value = $select_value;
-      }
-      break;
-    case 'grid':
-      $questions = array_keys(spwebformimport_parse_select_options($webform, $selected_component['cid'], 'questions'));
-      $csv_values = explode(',', $value);
-      $value = array();
-      foreach ($csv_values as $key => $csv_value) {
-        $value[$questions[$key]] = $csv_value;
-      }
-      break;
+        break;
+
+      case 'grid':
+        $questions = array_keys(spwebformimport_parse_select_options($webform, $selected_component['cid'], 'questions'));
+        $csv_values = explode(',', $value);
+        $value = array();
+        foreach ($csv_values as $key => $csv_value) {
+          $value[$questions[$key]] = $csv_value;
+        }
+        break;
     }
-    $webform_data[$selected_component['cid']] = $value;
+    if (!empty($value)) {
+      if (is_array($value) && !empty($webform_data[$selected_component['cid']])) {
+        $webform_data[$selected_component['cid']] = array_merge($webform_data[$selected_component['cid']], $value);
+      }
+      else {
+        $webform_data[$selected_component['cid']] = $value;
+      }
+    }
   }
 
   $submission = (object) array(
@@ -190,18 +201,19 @@ function spwebformimport_batch_process_row($row_number, $row, $selected_import_c
   if (!empty($existing_sid)) {
     // Row was imported before.
     switch ($existing_submissions_action) {
-    case 'skip':
-      drupal_set_message('Rij nr. ' . $row_number . ' was is eerder geïmporteerd (sid: ' . $existing_sid . ') en is overgeslagen.', 'warning');
-      return;
-      break;
-    case 'overwrite':
-      drupal_set_message('Rij nr. ' . $row_number . ' was reeds eerder geïmporteerd, de bestaande inzending met id: ' . $existing_sid . ' is bijgewerkt.', 'warning');
-      $submission->sid = $existing_sid;
-      $sid = webform_submission_update($webform, $submission);
-      break;
-    case 'add':
-      $sid = webform_submission_insert($webform, $submission);
-      break;
+      case 'skip':
+        drupal_set_message('Rij nr. ' . $row_number . ' was is eerder geïmporteerd (sid: ' . $existing_sid . ') en is overgeslagen.', 'warning');
+        return;
+
+      case 'overwrite':
+        drupal_set_message('Rij nr. ' . $row_number . ' was reeds eerder geïmporteerd, de bestaande inzending met id: ' . $existing_sid . ' is bijgewerkt.', 'warning');
+        $submission->sid = $existing_sid;
+        $sid = webform_submission_update($webform, $submission);
+        break;
+
+      case 'add':
+        $sid = webform_submission_insert($webform, $submission);
+        break;
     }
   }
   else {

@@ -124,7 +124,7 @@ function spwebformimport_import_form($form, &$form_state) {
               '#markup' => '<td>',
             );
             $component_id = $storage['selected_import_components'][$csv_field_key]['component_id'];
-            $component_options = spwebformimport_parse_select_options($storage['webform_node'], $component_id, 'items'); 
+            $component_options = spwebformimport_parse_select_options($storage['webform_node'], $component_id, 'items');
             foreach ($component_options as $component_option_key => $component_option_title) {
               $default = empty($storage['selected_import_components'][$csv_field_key]['select_mapping'][$component_option_key]) ? '' : $storage['selected_import_components'][$csv_field_key]['select_mapping'][$component_option_key];
               $form['mapping']['select_component_mapping_' .$csv_field_key . '_' . $component_option_key] = array(
@@ -191,10 +191,10 @@ function spwebformimport_ajax_form_callback($form, &$form_state) {
 }
 
 function spwebformimport_import_form_validate($form, &$form_state) {
-  $storage = &$form_state['storage'];                                                                 
+  $storage = &$form_state['storage'];
   $values = $form_state['values'];
 
-  if (!empty($form_state['triggering_element']['#name'])) {                                           
+  if (!empty($form_state['triggering_element']['#name'])) {
     $trigger = $form_state['triggering_element']['#name'];
     switch ($trigger) {
     case 'webform':
@@ -249,7 +249,7 @@ function spwebformimport_import_form_validate($form, &$form_state) {
       foreach ($storage['webform_node']->webform['components'] as $component_id => $component) {
         if ($component['required']) {
           if (!in_array($component_id, $selected_components)) {
-            form_set_error('mapping_error_' . $component_id, 'Het webformulier component "' . $component['name'] . '" is een verplicht veld!'); 
+            form_set_error('mapping_error_' . $component_id, 'Het webformulier component "' . $component['name'] . '" is een verplicht veld!');
           }
         }
       }
@@ -272,10 +272,10 @@ function spwebformimport_import_form_validate($form, &$form_state) {
 }
 
 function spwebformimport_import_form_submit($form, &$form_state) {
-  $storage = &$form_state['storage'];                                                                 
+  $storage = &$form_state['storage'];
   $values = $form_state['values'];
 
-  if (!empty($form_state['triggering_element']['#name'])) {                                           
+  if (!empty($form_state['triggering_element']['#name'])) {
     $trigger = $form_state['triggering_element']['#name'];
     switch ($trigger) {
     case 'submit_file':
@@ -293,10 +293,10 @@ function spwebformimport_import_form_submit($form, &$form_state) {
         if (!empty($matches[0])) {
           if (empty($values[$matches[0]])) {
             unset($storage['selected_import_components'][$matches[1]]['select_mapping'][$matches[2]]);
-          } 
+          }
           else {
             $storage['selected_import_components'][$matches[1]]['select_mapping'][$matches[2]] = $values[$matches[0]];
-          } 
+          }
         }
       }
       // Store form settings.
@@ -319,17 +319,17 @@ function spwebformimport_import_form_submit($form, &$form_state) {
       );
 
       // Import csv.
-      $batch = array(                                                                             
+      $batch = array(
         'operations' => array(
-          array('spwebformimport_batch', array($storage['selected_import_components'], $storage['webform_node'], $storage['upload'], $storage['delimiter'], $form_settings)),                                                              
+          array('spwebformimport_batch', array($storage['selected_import_components'], $storage['webform_node'], $storage['upload'], $storage['delimiter'], $form_settings)),
         ),
-        'finished' => 'spwebformimport_batch_finished',                                      
-        'title' => 'Importeren csv',                                                           
-        'init_message' => '0',                                                                    
-        'progress_message' => '',                                        
-        'error_message' => 'Er is een fout opgetreden bij het ophalen van data',             
-      );                                                                                          
-      batch_set($batch); 
+        'finished' => 'spwebformimport_batch_finished',
+        'title' => 'Importeren csv',
+        'init_message' => '0',
+        'progress_message' => '',
+        'error_message' => 'Er is een fout opgetreden bij het ophalen van data',
+      );
+      batch_set($batch);
       return;
       break;
     }
@@ -342,7 +342,7 @@ function spwebformimport_import_form_submit($form, &$form_state) {
  * @return
  *   An array of key/value pairs for form options list.
  */
-function _spwebformimport_delimiter_options() {                                                        
+function _spwebformimport_delimiter_options() {
   return array(
     ',' => t('Comma (,)'),
     '\t' => t('Tab (\t)'),
