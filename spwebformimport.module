@@ -12,7 +12,7 @@ function spwebformimport_menu() {
     'title' => 'CSV importeren',
     'type' => MENU_NORMAL_ITEM,
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('spwebformimport_import_form'),
+    'page arguments' => array('spwebformimport_import_form', 4),
     'file' => 'spwebformimport.import.form.inc',
     'access callback' => 'sprbs_access_check',
   );
