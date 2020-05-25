@@ -1,21 +1,12 @@
 <?php
 
-function spwebformimport_import_form($form, &$form_state, $form_id = NULL) {
+function spwebformimport_import_form($form, &$form_state) {
   $values = (empty($form_state['values']) ? array() : $form_state['values']);
   if (!empty($form_state['storage'])) {
     $storage = &$form_state['storage'];
   }
   else {
     $storage = array();
-  }
-  $default_form = '';
-  if (!empty($form_id) && empty($storage['webform'])) {
-    $webform = node_load($form_id);
-    if (!empty($webform)) {
-      $storage['webform'] = $form_id;
-      $storage['webform_node'] = $webform;
-      $default_form = $form_id;
-    }
   }
   $form = array();
   $form['#attached']['css'] = array(
@@ -45,7 +36,6 @@ function spwebformimport_import_form($form, &$form_state, $form_id = NULL) {
       '#title' => 'Kies het webformulier waar de data heen moet',
       '#options' => $webform_select_options,
       '#empty_option' => 'Kies:',
-      '#default_value' => $default_form,
       '#name' => 'webform',
       '#ajax' => array(
         'wrapper' => 'spwebformimport_ajax_form',
